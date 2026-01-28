@@ -23,7 +23,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const current = await authService.getCurrent();
       setUser(current);
-    } catch {
+    } catch (error: any) {
+      // 401 means no active session, which is expected behavior
+      if (error?.code !== 401) {
+        console.error("Error inesperado al cargar usuario:", error);
+      }
       setUser(null);
     } finally {
       setLoading(false);

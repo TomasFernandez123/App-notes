@@ -89,7 +89,13 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: "#0B0F14" },
+          animation: "fade",
+        }}
+      >
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(app)" />
       </Stack>
