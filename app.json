@@ -11,18 +11,20 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0B0F14"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "backgroundColor": "#0B0F14"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0B0F14"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.tomasfer47.noteapp"
     },
     "web": {
       "bundler": "metro",
@@ -34,6 +36,13 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "backgroundColor": "#0B0F14",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5f495e59-af1f-4092-b7f8-b1b2922402e5"
+      }
     }
   }
 }

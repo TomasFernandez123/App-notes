@@ -1,6 +1,16 @@
+import { FormInput } from "@/components/FormInput";
 import { useAuth } from "@/providers/AuthProvider";
+import { Link } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -17,7 +27,6 @@ export default function LoginScreen() {
   const [apiError, setApiError] = useState<string | null>(null);
   const { login } = useAuth();
 
-  // Inline validation with Zod
   const validation = useMemo(() => {
     const result = loginSchema.safeParse({ email, password });
     if (result.success) {
@@ -71,58 +80,65 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome back</Text>
-
-      <TextInput
-        placeholder="Email"
-        placeholderTextColor="#6B7280"
-        value={email}
-        onChangeText={handleEmailChange}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        style={[
-          styles.input,
-          touched.email && validation.errors.email && styles.inputError,
-        ]}
-      />
-      {touched.email && validation.errors.email && (
-        <Text style={styles.fieldError}>{validation.errors.email}</Text>
-      )}
-
-      <TextInput
-        placeholder="Password"
-        placeholderTextColor="#6B7280"
-        value={password}
-        onChangeText={handlePasswordChange}
-        secureTextEntry
-        style={[
-          styles.input,
-          touched.password && validation.errors.password && styles.inputError,
-        ]}
-      />
-      {touched.password && validation.errors.password && (
-        <Text style={styles.fieldError}>{validation.errors.password}</Text>
-      )}
-
-      {apiError && <Text style={styles.error}>{apiError}</Text>}
-
-      <Pressable
-        style={[styles.button, isButtonDisabled && styles.buttonDisabled]}
-        onPress={handleLogin}
-        disabled={isButtonDisabled}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.buttonText}>
-          {loading ? "Iniciando sesión..." : "Iniciar sesión"}
-        </Text>
-      </Pressable>
-    </View>
+        <Text style={styles.title}>Welcome back</Text>
+        <Text style={styles.subtitle}>Login in to access your notes</Text>
+
+        <View style={styles.form}>
+          <FormInput
+            icon="email-outline"
+            placeholder="name@example.com"
+            value={email}
+            onChangeText={handleEmailChange}
+            error={validation.errors.email}
+            touched={touched.email}
+            type="email"
+          />
+
+          <FormInput
+            icon="lock-outline"
+            placeholder="Password"
+            value={password}
+            onChangeText={handlePasswordChange}
+            error={validation.errors.password}
+            touched={touched.password}
+            type="password"
+          />
+
+          {apiError && <Text style={styles.error}>{apiError}</Text>}
+
+          <Pressable
+            style={[styles.button, isButtonDisabled && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={isButtonDisabled}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? "Logging in..." : "Log in"}
+            </Text>
+          </Pressable>
+
+          <Text style={styles.linkText}>
+            Don't have an account?{" "}
+            <Link style={styles.link} href="/register">
+              Register
+            </Link>{" "}
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#0B0F14",
     paddingHorizontal: 24,
     justifyContent: "center",
@@ -130,46 +146,34 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 28,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 24,
+    fontWeight: "bold",
+    color: "#ECEFF4",
+    marginBottom: 8,
+    textAlign: "center",
   },
 
-  input: {
-    height: 52,
-    borderRadius: 12,
-    backgroundColor: "#111827",
-    paddingHorizontal: 16,
+  subtitle: {
     fontSize: 16,
-    color: "#FFFFFF",
-    marginBottom: 4,
-    borderWidth: 1,
-    borderColor: "#1F2937",
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 40,
   },
 
-  inputError: {
-    borderColor: "#EF4444",
-  },
-
-  fieldError: {
-    color: "#EF4444",
-    fontSize: 12,
-    marginBottom: 10,
-    marginLeft: 4,
+  form: {
+    gap: 16,
+    flexDirection: "column",
   },
 
   button: {
     height: 52,
     borderRadius: 12,
-    backgroundColor: "#2563EB",
+    backgroundColor: "#7C5CFF",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 16,
   },
 
   buttonDisabled: {
-    backgroundColor: "#1E3A5F",
-    opacity: 0.7,
+    opacity: 0.2,
   },
 
   buttonText: {
@@ -182,5 +186,16 @@ const styles = StyleSheet.create({
     color: "#EF4444",
     marginTop: 8,
     fontSize: 14,
+  },
+
+  linkText: {
+    marginTop: 24,
+    color: "#6B7280",
+    fontSize: 15,
+    textAlign: "center",
+  },
+
+  link: {
+    color: "#7C5CFF",
   },
 });

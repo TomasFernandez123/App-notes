@@ -2,11 +2,19 @@ import { authService } from "@/services/auth.service";
 import { Models } from "appwrite";
 import { createContext, useContext, useEffect, useState } from "react";
 
+type UserWithProfile = Models.User<Models.Preferences> & {
+  profileData?: any;
+};
+
 type AuthContextType = {
-  user: Models.User<Models.Preferences> | null;
+  user: UserWithProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    fullName: string,
+  ) => Promise<void>; // Agregamos fullName
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -21,13 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadUser = async () => {
     try {
-      const current = await authService.getCurrent();
-      setUser(current);
+      // Usamos la nueva función que trae todo
+      const current = await authService.getUserData();
+      setUser(current as UserWithProfile);
     } catch (error: any) {
-      // 401 means no active session, which is expected behavior
-      if (error?.code !== 401) {
-        console.error("Error inesperado al cargar usuario:", error);
-      }
+      if (error?.code !== 401) console.error(error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -48,10 +54,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string) => {
+  const register = async (
+    email: string,
+    password: string,
+    fullName: string,
+  ) => {
     try {
-      await authService.register(email, password);
-      await login(email, password);
+      await authService.register(email, password, fullName);
+      // No hace falta llamar a login() aquí porque authService ya lo hace internamente
+      await loadUser();
     } catch (e) {
       console.log(e);
       throw e;

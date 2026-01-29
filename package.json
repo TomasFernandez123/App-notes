@@ -12,6 +12,7 @@
     "@expo/vector-icons": "^15.0.3",
     "@react-navigation/native": "^7.1.8",
     "appwrite": "^21.5.0",
+    "date-fns": "^4.1.0",
     "expo": "~54.0.32",
     "expo-constants": "~18.0.13",
     "expo-font": "~14.0.11",

@@ -17,29 +17,45 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/components/useColorScheme";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
-import { ActivityIndicator, View } from "react-native";
+import { NotesProvider } from "@/providers/NoteProvider";
 
 SplashScreen.preventAutoHideAsync();
 
+// Custom theme with app's background color to prevent color flash
+const customDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: "#0B0F14",
+  },
+};
+
+const customLightTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: "#0B0F14",
+  },
+};
+
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...FontAwesome.font,
   });
 
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+    if (fontError) throw fontError;
+  }, [fontError]);
 
-  useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
-
-  if (!loaded) return null;
+  // DON'T hide splash here - let RootLayoutNav handle it after auth resolves
+  if (!fontsLoaded) return null;
 
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <NotesProvider>
+        <RootLayoutNav />
+      </NotesProvider>
     </AuthProvider>
   );
 }
@@ -54,41 +70,30 @@ function RootLayoutNav() {
   const { loading, user } = useAuth();
 
   useEffect(() => {
-    if (!navState?.key) return;
-
-    if (loading) return;
+    // Don't do anything if navigation isn't ready or auth is still loading
+    if (!navState?.key || loading) return;
 
     const inAuthGroup = segments[0] === "(auth)";
 
-    if (!user) {
-      if (!inAuthGroup) {
-        router.replace("/(auth)/login");
-      }
-      return;
-    }
-
-    if (inAuthGroup) {
+    if (!user && !inAuthGroup) {
+      router.replace("/(auth)/login");
+    } else if (user && inAuthGroup) {
       router.replace("/(app)");
     }
+
+    // Hide splash screen ONLY after auth state is resolved and navigation is ready
+    SplashScreen.hideAsync();
   }, [navState?.key, loading, user, segments]);
 
-  if (!navState.key || loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#0B0F14",
-        }}
-      >
-        <ActivityIndicator size="large" />
-      </View>
-    );
+  // Keep splash screen visible while loading - return null instead of ActivityIndicator
+  if (loading || !navState?.key) {
+    return null;
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider
+      value={colorScheme === "dark" ? customDarkTheme : customLightTheme}
+    >
       <Stack
         screenOptions={{
           headerShown: false,
