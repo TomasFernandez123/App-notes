@@ -1,7 +1,14 @@
-import { Account, AppwriteException, Client, Databases, ID } from "appwrite";
+import {
+    Account,
+    AppwriteException,
+    Client,
+    Databases,
+    ID,
+    Storage,
+} from "react-native-appwrite";
 import "react-native-url-polyfill/auto";
 
-const config = {
+export const config = {
   endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
   projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
 };
@@ -18,5 +25,6 @@ export const client = new Client()
 
 export const account = new Account(client);
 export const databases = new Databases(client);
+export const storage = new Storage(client);
 
 export { AppwriteException, ID };

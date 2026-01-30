@@ -1,6 +1,6 @@
 // services/auth.service.ts
 import { account, databases } from "@/lib/appwrite";
-import { ID, Permission, Role } from "appwrite";
+import { ID, Permission, Role } from "react-native-appwrite";
 
 // 1. Copia estos IDs de tu consola de Appwrite
 const DATABASE_ID = "697a41ee000b6c76797e";

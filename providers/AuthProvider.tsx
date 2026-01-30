@@ -1,6 +1,6 @@
 import { authService } from "@/services/auth.service";
-import { Models } from "appwrite";
 import { createContext, useContext, useEffect, useState } from "react";
+import { Models } from "react-native-appwrite";
 
 type UserWithProfile = Models.User<Models.Preferences> & {
   profileData?: any;

@@ -1,11 +1,14 @@
 import { useAuth } from "@/providers/AuthProvider";
 import { useNotes } from "@/providers/NoteProvider";
+import { notesService } from "@/services/notes.service";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import * as ImagePicker from "expo-image-picker";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -41,6 +44,10 @@ export default function CreateNoteScreen() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
+  const [imageAsset, setImageAsset] =
+    useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [imagePreviewUri, setImagePreviewUri] = useState<string | null>(null);
+  const [shouldRemoveImage, setShouldRemoveImage] = useState(false);
   const [loading, setLoading] = useState(false);
   const { addNote, notes, updateNote, deleteNote } = useNotes();
   const { user } = useAuth();
@@ -54,13 +61,36 @@ export default function CreateNoteScreen() {
   useEffect(() => {
     if (isEditing) {
       const existingNote = notes.find((n) => n.$id === id);
+
       if (existingNote) {
         setTitle(existingNote.title);
         setContent(existingNote.content);
         setSelectedColor(existingNote.color || COLORS[0]);
+
+        const noteImageId =
+          existingNote.imageId || (existingNote as any).image_id;
+
+        if (noteImageId) {
+          const previewUrl = notesService.getImagePreview(noteImageId);
+          setImagePreviewUri(String(previewUrl));
+        }
       }
     }
-  }, [id, notes]); // Added notes dependency
+  }, [id, notes]);
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setImageAsset(result.assets[0]);
+      setShouldRemoveImage(false); // Resetear porque estamos agregando una nueva imagen
+    }
+  };
 
   const validation = useMemo(() => {
     const result = noteSchema.safeParse({ title, content });
@@ -83,9 +113,27 @@ export default function CreateNoteScreen() {
     try {
       setLoading(true);
       if (isEditing && id) {
-        await updateNote(id, title, content, selectedColor);
+        const existingNote = notes.find((n) => n.$id === id);
+        const oldImageId =
+          existingNote?.imageId || (existingNote as any)?.image_id;
+        await updateNote(
+          id,
+          title,
+          content,
+          selectedColor,
+          false,
+          imageAsset || undefined,
+          oldImageId,
+          shouldRemoveImage,
+        );
       } else {
-        await addNote(title, content, user!.$id, selectedColor);
+        await addNote(
+          title,
+          content,
+          user!.$id,
+          selectedColor,
+          imageAsset || undefined,
+        );
       }
       router.back();
     } catch (error) {
@@ -99,13 +147,23 @@ export default function CreateNoteScreen() {
     if (!id) return;
     try {
       setLoading(true);
-      await deleteNote(id);
+      const existingNote = notes.find((n) => n.$id === id);
+      await deleteNote(
+        id,
+        existingNote?.imageId || (existingNote as any)?.image_id,
+      );
       router.back();
     } catch (error) {
       console.error("Error al eliminar la nota:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteImage = () => {
+    setImageAsset(null);
+    setImagePreviewUri(null);
+    setShouldRemoveImage(true);
   };
 
   const isSaveDisabled = !validation.isValid || loading;
@@ -181,9 +239,31 @@ export default function CreateNoteScreen() {
           )}
           <Text style={styles.charCount}>{content.length}/1000</Text>
         </View>
+
+        {(imageAsset || imagePreviewUri) && (
+          <View style={styles.imagePreviewContainer}>
+            <Image
+              source={{ uri: imageAsset?.uri || imagePreviewUri! }}
+              style={styles.imagePreview}
+              onError={(e) =>
+                console.log("Image load error:", e.nativeEvent.error)
+              }
+            />
+            <Pressable style={styles.removeImage} onPress={handleDeleteImage}>
+              <MaterialIcons name="close" size={20} color="white" />
+            </Pressable>
+          </View>
+        )}
       </View>
 
       <View style={styles.colorPicker}>
+        <Pressable
+          onPress={pickImage}
+          disabled={loading}
+          style={{ marginTop: 4 }}
+        >
+          <FontAwesome name="image" size={26} color="#ECEFF4" />
+        </Pressable>
         {COLORS.map((color) => (
           <Pressable
             key={color}
@@ -269,5 +349,26 @@ const styles = StyleSheet.create({
   selectedColorOption: {
     borderColor: "#FFFFFF",
     borderWidth: 3,
+  },
+  imagePreviewContainer: {
+    width: "100%",
+    height: 200,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 10,
+    position: "relative",
+  },
+  imagePreview: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  removeImage: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 15,
+    padding: 4,
   },
 });
